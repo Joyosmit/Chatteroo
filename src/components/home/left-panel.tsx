@@ -5,10 +5,12 @@ import ThemeSwitch from "./theme-switch";
 import { conversations } from "@/dummy-data/db";
 import Conversation from "./conversations";
 import { UserButton } from "@clerk/nextjs";
+import UserListDialog from "./user-list-dialog";
+import { useConvexAuth } from "convex/react";
 
 const LeftPanel = () => {
 	// const conversations = [];
-
+	const {isAuthenticated} = useConvexAuth()
 	return (
 		<div className='w-1/4 border-gray-600 border-r'>
 			<div className='sticky top-0 bg-left-panel z-10'>
@@ -17,7 +19,9 @@ const LeftPanel = () => {
 					<UserButton />
 
 					<div className='flex items-center gap-3'>
-						<MessageSquareDiff size={20} /> {/* TODO: This line will be replaced with <UserListDialog /> */}
+						{/* Was getting an error as I was trying to render UserListDialog */}
+						{/* before authentication is loaded yet */}
+						{isAuthenticated && <UserListDialog/>}
 						<ThemeSwitch />
 					</div>
 				</div>
