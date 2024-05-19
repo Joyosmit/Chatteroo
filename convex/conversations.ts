@@ -11,14 +11,14 @@ export const createConversation = mutation({
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if(!identity) {
+        if (!identity) {
             throw new ConvexError("Unauthorized");
         }
 
         // reverse is also used to check as [user_1, user_2] and [user_2, user_1] are same
         const existingConversations = await ctx.db
             .query("conversations")
-            .filter(q => 
+            .filter(q =>
                 q.or(
                     q.eq(q.field("participants"), args.participants),
                     q.eq(q.field("participants"), args.participants.reverse())
@@ -26,13 +26,13 @@ export const createConversation = mutation({
             )
             .first()
 
-        if(existingConversations) {
+        if (existingConversations) {
             return existingConversations._id;
         }
 
         let groupImage;
 
-        if(args.groupImage){
+        if (args.groupImage) {
             // Later do this part
             groupImage = await ctx.storage.getUrl(args.groupImage) as string;
         }
@@ -55,16 +55,16 @@ export const getMyConversations = query({
     args: {},
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
-        if(!identity) {
+        if (!identity) {
             throw new ConvexError("Unauthorized");
         }
 
         const user = await ctx.db
-        .query("users")
-        .withIndex("by_tokenIdentifier", q => q.eq("tokenIdentifier", identity.tokenIdentifier))
-        .unique()
+            .query("users")
+            .withIndex("by_tokenIdentifier", q => q.eq("tokenIdentifier", identity.tokenIdentifier))
+            .unique()
 
-        if(!user) throw new ConvexError("User not found");
+        if (!user) throw new ConvexError("User not found");
 
         // get all convos
         const conversations = await ctx.db.query("conversations").collect();
@@ -78,21 +78,21 @@ export const getMyConversations = query({
         const conversationsWithDetails = await Promise.all(
             myConversations.map(async (conversation) => {
                 let userDetails = {};
-                if(!conversation.isGroup){
+                if (!conversation.isGroup) {
                     const otherUser = conversation.participants.find((id) => id !== user._id);
                     const userProfile = await ctx.db
-                    .query("users")
-                    .filter(q => q.eq(q.field("_id"), otherUser))
-                    .take(1)
+                        .query("users")
+                        .filter(q => q.eq(q.field("_id"), otherUser))
+                        .take(1)
 
                     userDetails = userProfile[0];
                 }
 
                 const lastMessage = await ctx.db
-                .query("messages")
-                .filter(q => q.eq(q.field("conversation"), conversation._id))
-                .order("desc")
-                .take(1)
+                    .query("messages")
+                    .filter(q => q.eq(q.field("conversation"), conversation._id))
+                    .order("desc")
+                    .take(1)
 
                 return {
                     ...userDetails,
@@ -107,6 +107,6 @@ export const getMyConversations = query({
 })
 
 
-export const generateUploadUrl = mutation(async(ctx) => {
+export const generateUploadUrl = mutation(async (ctx) => {
     return await ctx.storage.generateUploadUrl()
 })

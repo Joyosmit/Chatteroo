@@ -120,3 +120,26 @@ export const getMe = query({
 })
 
 // will later make getGroupMembers query
+export const getGroupMembers = query({
+    args: { conversationId: v.id("conversations") },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        // If an unauthorized user tries to get users, throw an error
+        if(!identity){
+            throw new ConvexError("Unauthorized");
+        }
+
+        const conversation = await ctx.db.query("conversations").filter(q => q.eq(q.field("_id"), args.conversationId)).unique()
+        if (!conversation) {
+            throw new ConvexError("Conversation not found");
+        }
+
+        // get all users 
+        const users = await ctx.db.query("users").collect();
+        const groupMembers = users.filter((user) => conversation.participants.includes(user._id));
+
+        return groupMembers;
+        // return conversation.participants;
+
+    }
+})
