@@ -1,6 +1,6 @@
 import { Laugh, Mic, Plus, Send } from "lucide-react";
 import { Input } from "../ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -8,6 +8,9 @@ import { useConversationStore } from "@/store/chat-store";
 import toast from "react-hot-toast";
 import useComponentVisible from "@/hooks/useComponentVisible";
 import EmojiPicker, { Theme, EmojiStyle } from 'emoji-picker-react';
+import MediaDropdown from "./media-dropdown";
+import { Dialog, DialogContent, DialogDescription } from "@radix-ui/react-dialog";
+import Image from "next/image";
 
 const MessageInput = () => {
 	const [msgText, setMsgText] = useState("");
@@ -43,7 +46,7 @@ const MessageInput = () => {
 						/>}
 					<Laugh className='text-gray-600 dark:text-gray-400' />
 				</div>
-				<Plus className='text-gray-600 dark:text-gray-400' />
+				<MediaDropdown/>
 			</div>
 			<form onSubmit={handleSendTextMessage} className='w-full flex gap-3'>
 				<div className='flex-1'>
@@ -79,3 +82,40 @@ const MessageInput = () => {
 	);
 };
 export default MessageInput;
+
+type MediaImageDialogProps = {
+	isOpen: boolean;
+	onClose: () => void;
+	selectedImage: File;
+	isLoading: boolean;
+	handleSendImage: () => void;
+};
+
+const MediaImageDialog = ({ isOpen, onClose, selectedImage, isLoading, handleSendImage }: MediaImageDialogProps) => {
+	const [renderedImage, setRenderedImage] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (!selectedImage) return;
+		const reader = new FileReader();
+		reader.onload = (e) => setRenderedImage(e.target?.result as string);
+		reader.readAsDataURL(selectedImage);
+	}, [selectedImage]);
+
+	return (
+		<Dialog
+			open={isOpen}
+			onOpenChange={(isOpen) => {
+				if (!isOpen) onClose();
+			}}
+		>
+			<DialogContent>
+				<DialogDescription className='flex flex-col gap-10 justify-center items-center'>
+					{renderedImage && <Image src={renderedImage} width={300} height={300} alt='selected image' />}
+					<Button className='w-full' disabled={isLoading} onClick={handleSendImage}>
+						{isLoading ? "Sending..." : "Send"}
+					</Button>
+				</DialogDescription>
+			</DialogContent>
+		</Dialog>
+	);
+};
