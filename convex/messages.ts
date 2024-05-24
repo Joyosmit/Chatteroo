@@ -83,7 +83,49 @@ export const getMessages = query({
     }
 })
 
+export const sendImage = mutation({
+    args: {
+        sender: v.id("users"),
+        conversation: v.id("conversations"),
+        imgId: v.id("_storage")
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new ConvexError("Unauthorized");
+        }
+        const content = await ctx.storage.getUrl(args.imgId) as string;
+        await ctx.db.insert("messages", {
+            content: content,
+            conversation: args.conversation,
+            sender: args.sender,
+            messageType: "image"
+        })
+    }
+})
 
+export const sendVideo = mutation({
+    args: {
+        videoId: v.id("_storage"),
+        sender: v.id("users"),
+        conversation: v.id("conversations")
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new ConvexError("Unauthorized");
+        }
+
+        const content = (await ctx.storage.getUrl(args.videoId)) as string;
+
+        await ctx.db.insert("messages", {
+            content: content,
+            sender: args.sender,
+            messageType: "video",
+            conversation: args.conversation,
+        });
+    },
+});
 // This method is unoptimized, it will be slow for large number of messages
 // as we are fetching user details for every message
 // export const getMessages = query({

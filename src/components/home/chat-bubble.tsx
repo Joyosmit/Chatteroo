@@ -2,6 +2,16 @@ import { MessageSeenSvg } from "@/lib/svgs";
 import { IMessage, useConversationStore } from "@/store/chat-store";
 import ChatBubbleAvatar from "./chat-bubble-avatar";
 import DateIndicator from "./date-indicator";
+import Image from "next/image";
+import { useState } from "react";
+// import { Dialog, DialogContent, DialogDescription } from "@radix-ui/react-dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+} from "@/components/ui/dialog"
+import ReactPlayer from "react-player";
+
 
 type ChatBubbleProps = {
 	me: any,
@@ -21,6 +31,8 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 	const fromMe = message.sender._id === me._id;
 	const bgClass = fromMe ? "bg-green-chat" : "bg-white dark:bg-gray-primary"
 
+	const [open, setOpen] = useState<boolean>(false);
+
 	if (!fromMe) {
 		return (
 			<>
@@ -33,7 +45,16 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 					/>
 					<div className={`flex flex-col z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
 						<OtherMessageIndicator />
-						<TextMessage message={message} />
+						{message.messageType === "text" && <TextMessage message={message} />}
+						{message.messageType === "image" && <ImageMessage message={message}
+							handleClick={() => setOpen(true)}
+						/>}
+						{open && <ImageDialog
+							src={message.content}
+							open={open}
+							onClose={() => setOpen(false)}
+						/>}
+						{message.messageType === "video" && <VideoMessage message={message} />}
 						<MessageTime time={time} fromMe={fromMe} />
 					</div>
 				</div>
@@ -46,7 +67,16 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 			<div className="flex gap-3 w-2/3 ml-auto">
 				<div className={`flex flex-col z-20 ml-auto max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
 					<SelfMessageIndicator />
-					<TextMessage message={message} />
+					{message.messageType === "text" && <TextMessage message={message} />}
+					{message.messageType === "image" && <ImageMessage message={message}
+						handleClick={() => setOpen(true)}
+					/>}
+					{open && <ImageDialog
+						src={message.content}
+						open={open}
+						onClose={() => setOpen(false)}
+					/>}
+					{message.messageType === "video" && <VideoMessage message={message} />}
 					<MessageTime time={time} fromMe={fromMe} />
 				</div>
 			</div>
@@ -71,6 +101,23 @@ const MessageTime = ({ time, fromMe }: { time: string; fromMe: boolean }) => {
 	);
 };
 
+const ImageDialog = ({ src, onClose, open }: { open: boolean; src: string; onClose: () => void }) => {
+	return (
+		<Dialog
+			open={open}
+			onOpenChange={(isOpen) => {
+				if (!isOpen) onClose();
+			}}
+		>
+			<DialogContent className='min-w-[750px]'>
+				<DialogDescription className='relative h-[450px] flex justify-center'>
+					<Image src={src} fill className='rounded-lg object-contain' alt='image' />
+				</DialogDescription>
+			</DialogContent>
+		</Dialog>
+	);
+};
+
 const TextMessage = ({ message }: { message: IMessage }) => {
 	const isLink = /^(ftp|http|https):\/\/[^ "]+$/.test(message.content); // Check if the content is a URL
 
@@ -90,4 +137,22 @@ const TextMessage = ({ message }: { message: IMessage }) => {
 			)}
 		</div>
 	);
+};
+
+const ImageMessage = ({ message, handleClick }: { message: IMessage; handleClick: () => void }) => {
+	return (
+		<div className='w-[250px] h-[250px] m-2 relative'>
+			<Image
+				src={message.content}
+				fill
+				className='cursor-pointer object-cover rounded'
+				alt='image'
+				onClick={handleClick}
+			/>
+		</div>
+	);
+};
+
+const VideoMessage = ({ message }: { message: IMessage }) => {
+	return <ReactPlayer url={message.content} width='250px' height='250px' controls={true} light={true} />;
 };

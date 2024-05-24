@@ -25,6 +25,7 @@ const LeftPanel = () => {
 						{/* Was getting an error as I was trying to render UserListDialog */}
 						{/* before authentication is loaded yet */}
 						{isAuthenticated && <UserListDialog/>}
+						
 						<ThemeSwitch />
 					</div>
 				</div>

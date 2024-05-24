@@ -5,6 +5,8 @@ import { ImageIcon, Users, VideoIcon } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useConversationStore } from "@/store/chat-store";
+import { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 
 const Conversation = ({ conversation }: { conversation: any }) => {
 	const conversationImage = conversation.groupImage || conversation.image;
@@ -16,6 +18,41 @@ const Conversation = ({ conversation }: { conversation: any }) => {
 
 	const { setSelectedConversation, selectedConversation } = useConversationStore()
 	const activeBgClass = selectedConversation?._id === conversation._id;
+
+	const previousLastMessage = useRef(lastMessage);
+	
+
+	useEffect(() => {
+		if (previousLastMessage.current && lastMessage && previousLastMessage.current._creationTime !== lastMessage._creationTime && lastMessage.sender !== me?._id && !activeBgClass) {
+		//   toast.success("You have a new message!");
+		toast('You have a new message', {
+			duration: 4000,
+			position: 'top-center',
+		  
+			// Styling
+			style: {},
+			className: '',
+		  
+			// Custom Icon
+			icon: '🔔',
+		  
+			// Change colors of success/error/loading icon
+			iconTheme: {
+			  primary: '#000',
+			  secondary: '#fff',
+			},
+		  
+			// Aria
+			ariaProps: {
+			  role: 'status',
+			  'aria-live': 'polite',
+			},
+		  });
+		  // Alternatively, you can use a more sophisticated notification system
+		  // like toast notifications instead of a browser alert.
+		}
+		previousLastMessage.current = lastMessage;
+	  }, [lastMessage]);
 
 	return (
 		<>
