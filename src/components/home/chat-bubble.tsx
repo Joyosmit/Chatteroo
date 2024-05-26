@@ -11,10 +11,20 @@ import {
 	DialogDescription,
 } from "@/components/ui/dialog"
 import ReactPlayer from "react-player";
+import ChatAvatarActions from "./chat-avatar-actions";
+import { Id } from "../../../convex/_generated/dataModel";
 
 
 type ChatBubbleProps = {
-	me: any,
+	me: {
+		_id: Id<"users">;
+		_creationTime: number;
+		name?: string | undefined;
+		image: string;
+		email: string;
+		tokenIdentifier: string;
+		isOnline: boolean;
+	},
 	message: IMessage,
 	previousMessage: IMessage | undefined
 }
@@ -45,6 +55,7 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 					/>
 					<div className={`flex flex-col z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
 						<OtherMessageIndicator />
+						{isGroup && <ChatAvatarActions message={message} me={me} />}
 						{message.messageType === "text" && <TextMessage message={message} />}
 						{message.messageType === "image" && <ImageMessage message={message}
 							handleClick={() => setOpen(true)}
