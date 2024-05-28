@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 
 const Conversation = ({ conversation }: { conversation: any }) => {
+	
 	const conversationImage = conversation.groupImage || conversation.image;
 	const conversationName = conversation.groupName || conversation.name;
 	const lastMessage = conversation.lastMessage;
@@ -23,7 +24,7 @@ const Conversation = ({ conversation }: { conversation: any }) => {
 	
 
 	useEffect(() => {
-		if (previousLastMessage.current && lastMessage && previousLastMessage.current._creationTime !== lastMessage._creationTime && lastMessage.sender !== me?._id && !activeBgClass) {
+		if ((previousLastMessage.current && lastMessage && previousLastMessage.current._creationTime !== lastMessage._creationTime && lastMessage.sender !== me?._id && !activeBgClass)) {
 		//   toast.success("You have a new message!");
 		toast('You have a new message', {
 			duration: 4000,

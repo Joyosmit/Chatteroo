@@ -11,6 +11,7 @@ export const createUser = internalMutation({
         image: v.string(),
     },
     handler: async (ctx, args) => {
+        // console.log("EMAIL: ",args.email)
         await ctx.db.insert("users", {
             tokenIdentifier: args.tokenIdentifier,
             email: args.email,
