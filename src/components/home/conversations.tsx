@@ -7,6 +7,7 @@ import { api } from "../../../convex/_generated/api";
 import { useConversationStore } from "@/store/chat-store";
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
+import { useMobileStore } from "@/store/mobile-store";
 
 const Conversation = ({ conversation }: { conversation: any }) => {
 	
@@ -55,11 +56,16 @@ const Conversation = ({ conversation }: { conversation: any }) => {
 		previousLastMessage.current = lastMessage;
 	  }, [lastMessage]);
 
+	  const { selectedLeft, placeholderNeeded, setSelectedLeft } = useMobileStore();
+	  const handleClick = () => {
+		setSelectedConversation(conversation);
+		setSelectedLeft(false);
+	  }
 	return (
 		<>
 			<div className={`flex gap-2 items-center p-3 hover:bg-chat-hover cursor-pointer 
 			${activeBgClass ? "bg-chat-hover" : ""}`}
-			onClick={()=>setSelectedConversation(conversation)}>
+			onClick={handleClick}>
 				<Avatar className='border border-gray-900 overflow-visible relative'>
 					{conversation.isOnline && (
 						<div className='absolute top-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-foreground' />

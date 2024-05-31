@@ -6,16 +6,24 @@ import MessageContainer from "./message-container";
 import ChatPlaceHolder from "@/components/home/chat-placeholder";
 import GroupMembersDialog from "./group-members-dialog";
 import { useConversationStore } from "@/store/chat-store";
+import { useMobileStore } from "@/store/mobile-store";
 
 const RightPanel = () => {
     const {selectedConversation, setSelectedConversation} = useConversationStore()
+    const {selectedLeft,setPlaceholderNeeded, setSelectedLeft} = useMobileStore()
     if (!selectedConversation) return <ChatPlaceHolder />;
 
     const conversationName = selectedConversation?.groupName || selectedConversation?.name;
     const conversationImage = selectedConversation?.groupImage || selectedConversation?.image;
     // const isGroup = true;
+    const handleXClick = () => {
+        setSelectedConversation(null!);
+        setSelectedLeft(true);
+        setPlaceholderNeeded(false);
+    }
+
     return (
-        <div className='w-3/4 flex flex-col'>
+        <div className={`w-screen lg:w-3/4 bg-red-700 flex flex-col ${selectedLeft?'hidden':''}`}>
             <div className='w-full sticky top-0 z-50'>
                 {/* Header */}
                 <div className='flex justify-between bg-gray-primary p-3'>
@@ -37,7 +45,7 @@ const RightPanel = () => {
                             <Video size={23} />
                         </a>
                         <X size={16} className='cursor-pointer' 
-                        onClick={()=>setSelectedConversation(null!)}/>
+                        onClick={handleXClick}/>
                     </div>
                 </div>
             </div>

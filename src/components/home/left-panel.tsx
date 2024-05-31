@@ -7,6 +7,8 @@ import { UserButton } from "@clerk/nextjs";
 import UserListDialog from "./user-list-dialog";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useMobileStore } from "@/store/mobile-store";
+import { useConversationStore } from "@/store/chat-store";
 
 const LeftPanel = () => {
 	// const conversations = [];
@@ -14,8 +16,12 @@ const LeftPanel = () => {
 	const conversations = useQuery(api.conversations.getMyConversations,
 		isAuthenticated ? undefined : "skip"
 	)
+
+	const {selectedLeft,placeholderNeeded, setSelectedLeft} = useMobileStore()
+	const {selectedConversation, setSelectedConversation} = useConversationStore()
+
 	return (
-		<div className='w-1/4 border-gray-600 border-r'>
+		<div className={`lg:w-1/4 border-gray-600 lg:flex flex-col border-r ${selectedLeft && !placeholderNeeded ?'w-screen':'hidden'}`}>
 			<div className='sticky top-0 bg-left-panel z-10'>
 				{/* Header */}
 				<div className='flex justify-between bg-gray-primary p-3 items-center'>
