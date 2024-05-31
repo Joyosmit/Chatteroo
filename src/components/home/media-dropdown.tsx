@@ -64,6 +64,11 @@ const MediaDropdown = () => {
     }
 
     const handleSendVideo = async () => {
+        if (selectedVideo && selectedVideo.size > 2 * 1024 * 1024) { // Check if the video size is greater than 2MB
+            toast.error(" Video size exceeds 2MB.");
+            return;
+            // throw new Error("Large")
+        }
 		setIsLoading(true);
 		try {
 			const postUrl = await generateUploadUrl();
@@ -83,7 +88,11 @@ const MediaDropdown = () => {
 
 			setSelectedVideo(null);
 		} catch (error:any) {
-            console.log("Error: ",error.message)
+            if(error.message == "Large"){
+                toast.error("Video size should be less than 2 MB")
+            } else {
+                toast.error("Failed to send video")
+            }
 		} finally {
 			setIsLoading(false);
 		}
