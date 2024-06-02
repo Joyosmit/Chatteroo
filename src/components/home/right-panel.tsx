@@ -23,7 +23,7 @@ const RightPanel = () => {
     }
 
     return (
-        <div className={`w-screen lg:w-3/4 bg-red-700 flex flex-col ${selectedLeft?'hidden':''}`}>
+        <div className={`w-screen lg:w-3/4  bg-transparent flex flex-col ${selectedLeft?'hidden':''}`}>
             <div className='w-full sticky top-0 z-50'>
                 {/* Header */}
                 <div className='flex justify-between bg-gray-primary p-3'>

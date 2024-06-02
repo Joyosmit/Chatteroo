@@ -40,6 +40,28 @@ export const sendTextMessage = mutation({
     }
 })
 
+export const deleteMessage = mutation({
+    args: {
+        messageId: v.id("messages"),
+        messageType: v.union(v.literal("text"), v.literal("image"), v.literal("video")),
+        storageId: v.id("_storage")
+        // messageContent: v.string()
+    },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        // If an unauthorized user tries to get users, throw an error
+        if (!identity) {
+            throw new ConvexError("Unauthorized");
+        }
+
+        await ctx.db.delete(args.messageId)
+
+        if(args.messageType === "image" || args.messageType === "video") {
+            await ctx.storage.delete(args.storageId)
+        }
+    }
+})
+
 export const getMessages = query({
     args: {
         conversation: v.id("conversations"),
@@ -99,7 +121,8 @@ export const sendImage = mutation({
             content: content,
             conversation: args.conversation,
             sender: args.sender,
-            messageType: "image"
+            messageType: "image",
+            storageId: args.imgId
         })
     }
 })
@@ -123,6 +146,7 @@ export const sendVideo = mutation({
             sender: args.sender,
             messageType: "video",
             conversation: args.conversation,
+            storageId: args.videoId,
         });
     },
 });

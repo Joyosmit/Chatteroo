@@ -13,6 +13,9 @@ import {
 import ReactPlayer from "react-player";
 import ChatAvatarActions from "./chat-avatar-actions";
 import { Id } from "../../../convex/_generated/dataModel";
+import { ListCollapse, Option } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 
 type ChatBubbleProps = {
@@ -35,27 +38,81 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 	const minutes = date.getMinutes().toString().padStart(2, "0")
 	const time = `${hours}:${minutes}`
 
+	const [option, setOption] = useState<boolean>(false)
+
 	const { selectedConversation } = useConversationStore()
 	const isMember = selectedConversation?.participants.includes(message.sender._id) || false;
 	const isGroup = selectedConversation?.isGroup;
 	const fromMe = message.sender._id === me._id;
 	const bgClass = fromMe ? "bg-green-chat" : "bg-white dark:bg-gray-primary"
 
+	const deleteMessage = useMutation(api.messages.deleteMessage)
+
 	const [open, setOpen] = useState<boolean>(false);
+
+
+	const handleDelete = async () => {
+		
+		// @ts-expect-error
+		await deleteMessage({ messageId: message._id, messageType: message.messageType, storageId: message?.storageId})
+		console.log("Deleted YAYY")
+	}
 
 	if (!fromMe) {
 		return (
-			<>
+			<div className="flex flex-col">
 				<DateIndicator message={message} previousMessage={previousMessage} />
-				<div className="flex gap-3 w-2/3">
-					<ChatBubbleAvatar
-						message={message}
-						isMember={isMember}
-						isGroup={isGroup}
-					/>
-					<div className={`flex flex-col z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
-						<OtherMessageIndicator />
-						{isGroup && <ChatAvatarActions message={message} me={me} />}
+				<div className=" flex items-start gap-x-3">
+					<div className="flex gap-3 w-fit">
+						<ChatBubbleAvatar
+							message={message}
+							isMember={isMember}
+							isGroup={isGroup}
+						/>
+						<div className={`flex flex-col z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
+							<OtherMessageIndicator />
+							{isGroup && <ChatAvatarActions message={message} me={me} />}
+							{message.messageType === "text" && <TextMessage message={message} />}
+							{message.messageType === "image" && <ImageMessage message={message}
+								handleClick={() => setOpen(true)}
+							/>}
+							{open && <ImageDialog
+								src={message.content}
+								open={open}
+								onClose={() => setOpen(false)}
+							/>}
+							{message.messageType === "video" && <VideoMessage message={message} />}
+							<MessageTime time={time} fromMe={fromMe} />
+						</div>
+					</div>
+					<div className="relative">
+						<ListCollapse className="text-slate-600 opacity-0 hover:opacity-80 duration-200 cursor-pointer dark:text-white"
+							onClick={() => setOption(!option)} />
+						<div className={`w-[100px] h-[cal(100px/3)] z-50 duration-75 ease-in rounded-lg -right-[110px] -top-[20px] flex flex-col bg-slate-300 dark:bg-slate-500 absolute ${option ? 'visible' : 'hidden'} `}>
+							<p className="w-full rounded-tl-lg rounded-tr-lg cursor-pointer hover:bg-slate-600 h-1/3 flex items-center justify-center border-b-2 border-b-slate-200">Copy</p>
+							<p className="w-full rounded-bl-lg rounded-br-lg cursor-pointer hover:bg-slate-600 h-1/3 flex items-center justify-center ">Forward</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		)
+	}
+	return (
+		<div className="flex flex-col">
+			<DateIndicator message={message} previousMessage={previousMessage} />
+			<div className="flex self-end max-w-[70%] justify-end gap-x-3 relative ">
+				<div className="relative">
+					<ListCollapse className="text-slate-600 opacity-0 hover:opacity-80 duration-200 cursor-pointer dark:text-white"
+						onClick={() => setOption(!option)} />
+					<div className={`w-[100px] z-50 h-[100px] rounded-lg -left-[100px] -top-[50px] flex flex-col bg-slate-300 dark:bg-slate-500 absolute ${option ? 'visible' : 'hidden'} `}>
+						<p className="w-full h-1/3 flex items-center justify-center rounded-tl-lg rounded-tr-lg cursor-pointer hover:bg-slate-600 border-b-2 border-b-slate-200">Copy</p>
+						<p className="w-full h-1/3 flex items-center justify-center cursor-pointer hover:bg-slate-600 border-b-2 border-b-slate-200">Forward</p>
+						<p className="w-full h-1/3 flex items-center justify-center rounded-bl-lg rounded-br-lg cursor-pointer hover:bg-slate-600" onClick={handleDelete}>Delete</p>
+					</div>
+				</div>
+				<div className="flex gap-3 w-fit ">
+					<div className={`flex flex-col z-20 ml-auto max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
+						<SelfMessageIndicator />
 						{message.messageType === "text" && <TextMessage message={message} />}
 						{message.messageType === "image" && <ImageMessage message={message}
 							handleClick={() => setOpen(true)}
@@ -69,29 +126,8 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 						<MessageTime time={time} fromMe={fromMe} />
 					</div>
 				</div>
-			</>
-		)
-	}
-	return (
-		<>
-			<DateIndicator message={message} previousMessage={previousMessage} />
-			<div className="flex gap-3 w-2/3 ml-auto">
-				<div className={`flex flex-col z-20 ml-auto max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
-					<SelfMessageIndicator />
-					{message.messageType === "text" && <TextMessage message={message} />}
-					{message.messageType === "image" && <ImageMessage message={message}
-						handleClick={() => setOpen(true)}
-					/>}
-					{open && <ImageDialog
-						src={message.content}
-						open={open}
-						onClose={() => setOpen(false)}
-					/>}
-					{message.messageType === "video" && <VideoMessage message={message} />}
-					<MessageTime time={time} fromMe={fromMe} />
-				</div>
 			</div>
-		</>
+		</div>
 	)
 };
 export default ChatBubble;

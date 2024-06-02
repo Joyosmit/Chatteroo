@@ -9,6 +9,7 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useMobileStore } from "@/store/mobile-store";
 import { useConversationStore } from "@/store/chat-store";
+import { useEffect } from "react";
 
 const LeftPanel = () => {
 	// const conversations = [];
@@ -20,6 +21,12 @@ const LeftPanel = () => {
 	const {selectedLeft,placeholderNeeded, setSelectedLeft} = useMobileStore()
 	const {selectedConversation, setSelectedConversation} = useConversationStore()
 
+	useEffect(() => {
+		const conversationIds = conversations?.map((conv) => conv._id)
+		if (!conversationIds?.includes(selectedConversation?._id!)) {
+			setSelectedConversation(null!)
+		}
+	},[conversations, selectedConversation, setSelectedConversation])
 	return (
 		<div className={`lg:w-1/4 border-gray-600 lg:flex flex-col border-r ${selectedLeft && !placeholderNeeded ?'w-screen':'hidden'}`}>
 			<div className='sticky top-0 bg-left-panel z-10'>
@@ -60,7 +67,7 @@ const LeftPanel = () => {
 				{conversations?.map((conversation) => (
 					<Conversation key={conversation._id} conversation={conversation}/>
 				))}
-				{conversations?.length === 0 && (
+				{conversations?.length === 0 &&(
 					<>
 						<p className='text-center text-gray-500 text-sm mt-3'>No conversations yet</p>
 						<p className='text-center text-gray-500 text-sm mt-3 '>

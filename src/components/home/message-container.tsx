@@ -9,7 +9,7 @@ const MessageContainer = () => {
 	const me = useQuery(api.users.getMe)
 	console.log("MESSAGE: ",messages)
 	return (
-		<div className='relative p-3 flex-1 overflow-auto h-full bg-chat-tile-light dark:bg-chat-tile-dark'>
+		<div className='relative p-3 flex-1 overflow-auto h-full bg-[url("/dall-e.png")] bg-no-repeat bg-center bg-contain  dark:bg-chat-tile-dark'>
 			<div className='mx-12 flex flex-col gap-3 h-full'>
 				{messages?.map((msg, idx) => (
 					<div key={msg._id}>
