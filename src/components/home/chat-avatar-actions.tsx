@@ -26,7 +26,11 @@ const ChatAvatarActions = ({ message, me }: ChatAvatarActionsProps) => {
     const kickUser = useMutation(api.conversations.kickUser)
     const createConversation = useMutation(api.conversations.createConversation)
 
+    const fromAI = message.sender?.name === "Gemini";
+    const isGroup = selectedConversation?.isGroup;
+
     const handleKickUser = async (e:React.MouseEvent) => {
+        if(fromAI) return;
         e.stopPropagation()
         if (!selectedConversation) return;
         try {
@@ -40,6 +44,7 @@ const ChatAvatarActions = ({ message, me }: ChatAvatarActionsProps) => {
     // When user clicks on the another user name, create a conversation with that user
     // Only works in group chat
     const handleCreateConversation = async () => {
+        if(fromAI) return;
         try {
             const conversationId = await createConversation({
                 participants: [me._id, message.sender._id],
@@ -64,11 +69,11 @@ const ChatAvatarActions = ({ message, me }: ChatAvatarActionsProps) => {
             >
             {message.sender.name}
 
-            {isMember && selectedConversation?.admin === me._id && (
+            {isGroup && isMember && selectedConversation?.admin === me._id && (
                 <LogOut size={16} className="text-red-500 opacity-0 hover:opacity-100"
                     onClick={handleKickUser} />
             )}
-            {!isMember && <Ban size={16} className="text-red-500" />}
+            {!isMember && !fromAI && isGroup && <Ban size={16} className="text-red-500" />}
         </div>
     )
 }

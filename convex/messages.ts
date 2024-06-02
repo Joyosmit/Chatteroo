@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 
 export const sendTextMessage = mutation({
     args: {
@@ -37,14 +38,44 @@ export const sendTextMessage = mutation({
             conversation: args.conversation,
             messageType: "text",
         })
+
+        if(args.content.startsWith("@gemini")){
+            await ctx.scheduler.runAfter(0, api.gemini.chat, {
+                messageBody: args.content,
+                conversation: args.conversation,
+            })
+        }
     }
 })
+
+export const sendGeminiMessage = mutation({
+    args: {
+        content: v.string(),
+        conversation: v.id("conversations"),
+    },
+    handler: async (ctx, args) => {
+        let strDb;
+        if(args.content.substring(0, 8).trim() === "@gemini"){
+            strDb = args.content.slice(8);
+        } else{
+            strDb = args.content;
+        }
+        console.log("PRINTING STRDB", strDb)
+        await ctx.db.insert("messages", {
+            sender: "Gemini",
+            content: strDb,
+            conversation: args.conversation,
+            messageType: "text",
+        })
+    }
+})
+
 
 export const deleteMessage = mutation({
     args: {
         messageId: v.id("messages"),
         messageType: v.union(v.literal("text"), v.literal("image"), v.literal("video")),
-        storageId: v.id("_storage")
+        storageId: v.optional(v.id("_storage"))
         // messageContent: v.string()
     },
     handler: async (ctx, args) => {
@@ -57,7 +88,7 @@ export const deleteMessage = mutation({
         await ctx.db.delete(args.messageId)
 
         if(args.messageType === "image" || args.messageType === "video") {
-            await ctx.storage.delete(args.storageId)
+            await ctx.storage.delete(args.storageId!)
         }
     }
 })
@@ -82,6 +113,15 @@ export const getMessages = query({
         // messages has sender's id, we need to get the sender's user details
         const messagesWithSender = await Promise.all(
             messages.map(async message => {
+                if(message.sender === "Gemini"){
+                    return {
+                        ...message,
+                        sender: {
+                            name: "Gemini",
+                            image: "/gemini.png"
+                        }
+                    }
+                }
                 let sender;
                 // if we have already fetched the user details, use it from cache
                 if (userProfileCache.has(message.sender)) {

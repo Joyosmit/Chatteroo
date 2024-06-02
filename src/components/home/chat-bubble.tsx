@@ -13,7 +13,7 @@ import {
 import ReactPlayer from "react-player";
 import ChatAvatarActions from "./chat-avatar-actions";
 import { Id } from "../../../convex/_generated/dataModel";
-import { ListCollapse, Option } from "lucide-react";
+import { Bot, ListCollapse, Option } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
@@ -41,10 +41,11 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 	const [option, setOption] = useState<boolean>(false)
 
 	const { selectedConversation } = useConversationStore()
-	const isMember = selectedConversation?.participants.includes(message.sender._id) || false;
+	const isMember = selectedConversation?.participants.includes(message.sender?._id) || false;
 	const isGroup = selectedConversation?.isGroup;
-	const fromMe = message.sender._id === me._id;
-	const bgClass = fromMe ? "bg-green-chat" : "bg-white dark:bg-gray-primary"
+	const fromMe = message.sender?._id === me._id;
+	const fromAI = message.sender?.name === "Gemini";
+	const bgClass = fromMe ? "bg-green-chat" : fromAI ? 'bg-blue-500 text-white' : "bg-white dark:bg-gray-primary"
 
 	const deleteMessage = useMutation(api.messages.deleteMessage)
 
@@ -52,9 +53,9 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 
 
 	const handleDelete = async () => {
-		
+
 		// @ts-expect-error
-		await deleteMessage({ messageId: message._id, messageType: message.messageType, storageId: message?.storageId})
+		await deleteMessage({ messageId: message._id, messageType: message.messageType, storageId: message?.storageId })
 		console.log("Deleted YAYY")
 	}
 
@@ -68,10 +69,12 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 							message={message}
 							isMember={isMember}
 							isGroup={isGroup}
+							fromAI = {fromAI}
 						/>
-						<div className={`flex flex-col z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
-							<OtherMessageIndicator />
-							{isGroup && <ChatAvatarActions message={message} me={me} />}
+						<div className={`flex flex-col min-w-[10vw] lg:min-w-[5vw] z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
+							{!fromAI && <OtherMessageIndicator />}
+							{fromAI && <Bot size={16} className="absolute text-white bottom-[2px] left-2"/>	}
+							{<ChatAvatarActions message={message} me={me} />}
 							{message.messageType === "text" && <TextMessage message={message} />}
 							{message.messageType === "image" && <ImageMessage message={message}
 								handleClick={() => setOpen(true)}
@@ -177,7 +180,7 @@ const TextMessage = ({ message }: { message: IMessage }) => {
 					rel='noopener noreferrer'
 					className={`mr-2 text-sm font-light text-blue-400 underline`}
 				>
-					{message.content}
+					{message.content.substring(0,8)=="@gemini" ? message.content.slice(8) : message.content}
 				</a>
 			) : (
 				<p className={`mr-2 text-sm font-light`}>{message.content}</p>
