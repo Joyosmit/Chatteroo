@@ -25,5 +25,9 @@ export default defineSchema({
         content: v.string(),
         messageType: v.union(v.literal("text"), v.literal("image"), v.literal("video")),
         storageId: v.optional(v.id("_storage")),
+        // replyMessageType: v.optional(v.union(v.literal("text"), v.literal("image"), v.literal("video"), v.literal(""))),
+        // replyMesssageContent: v.optional(v.string()),
+        // replyMessageSenderName: v.optional(v.string()),
+        replyMessageId: v.optional(v.id("messages")),
     }).index("by_conversation", ["conversation"]),
 })

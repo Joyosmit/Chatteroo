@@ -3,7 +3,7 @@ import { IMessage, useConversationStore } from "@/store/chat-store";
 import ChatBubbleAvatar from "./chat-bubble-avatar";
 import DateIndicator from "./date-indicator";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 // import { Dialog, DialogContent, DialogDescription } from "@radix-ui/react-dialog";
 import {
 	Dialog,
@@ -13,9 +13,10 @@ import {
 import ReactPlayer from "react-player";
 import ChatAvatarActions from "./chat-avatar-actions";
 import { Id } from "../../../convex/_generated/dataModel";
-import { Bot, ListCollapse, Option } from "lucide-react";
+import { Bot, ImageIcon, ListCollapse, Option, VideoIcon } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import useReplyStore from "@/store/reply-store";
 
 
 type ChatBubbleProps = {
@@ -37,7 +38,6 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 	const hours = date.getHours().toString().padStart(2, "0")
 	const minutes = date.getMinutes().toString().padStart(2, "0")
 	const time = `${hours}:${minutes}`
-
 	const [option, setOption] = useState<boolean>(false)
 
 	const { selectedConversation } = useConversationStore()
@@ -50,7 +50,14 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 	const deleteMessage = useMutation(api.messages.deleteMessage)
 
 	const [open, setOpen] = useState<boolean>(false);
+	const { messageId, setMessageId, addReply, replies } = useReplyStore()
 
+	// useEffect(()=>{
+	// 	console.log("OO MY GOOD: ",messageId)
+	// },[messageId, setMessageId])
+	// useEffect(()=>{
+	// 	console.log("OO MY NIGGA: ",replies)
+	// },[replies])
 
 	const handleDelete = async () => {
 
@@ -59,6 +66,13 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 		console.log("Deleted YAYY")
 	}
 
+	const handleAddReply = (inputMessage: IMessage) => {
+		if (inputMessage.messageType == 'text') {
+			addReply(selectedConversation?._id!, inputMessage._id, inputMessage.messageType, inputMessage.content, inputMessage.sender.name!)
+		} else {
+			addReply(selectedConversation?._id!, inputMessage._id, inputMessage.messageType, '', inputMessage.sender.name!)
+		}
+	}
 	if (!fromMe) {
 		return (
 			<div className="flex flex-col">
@@ -69,12 +83,18 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 							message={message}
 							isMember={isMember}
 							isGroup={isGroup}
-							fromAI = {fromAI}
+							fromAI={fromAI}
 						/>
 						<div className={`flex flex-col min-w-[10vw] lg:min-w-[5vw] z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
 							{!fromAI && <OtherMessageIndicator />}
-							{fromAI && <Bot size={16} className="absolute text-white bottom-[2px] left-2"/>	}
+							{fromAI && <Bot size={16} className="absolute text-white bottom-[2px] left-2" />}
 							{<ChatAvatarActions message={message} me={me} />}
+							{message.replyMessageSenderMessageType ? <div className="w-full flex flex-col items-start bg-green-900 mx-auto">
+								<p className=" text-slate-300">{message.replyMessageSenderName?.length! > 10 ? message.replyMessageSenderName?.slice(0, 10) + '...' : message.replyMessageSenderName}</p>
+								<p className="text-white">{message.replyMessageSenderMessageType == 'text' ? message.replyMessageSenderMessage?.length! > 10 ? message.replyMessageSenderMessage?.slice(0, 10) : message.replyMessageSenderMessage : ''}</p>
+								<p className="text-white">{message.replyMessageSenderMessageType == 'image' ? <ImageIcon size={12} className="text-white" /> : ''}</p>
+								<p className="text-white">{message.replyMessageSenderMessageType == 'video' ? <VideoIcon size={12} className="text-white" /> : ''}</p>
+							</div> : ''}
 							{message.messageType === "text" && <TextMessage message={message} />}
 							{message.messageType === "image" && <ImageMessage message={message}
 								handleClick={() => setOpen(true)}
@@ -92,8 +112,10 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 						<ListCollapse className="text-slate-600 opacity-0 hover:opacity-80 duration-200 cursor-pointer dark:text-white"
 							onClick={() => setOption(!option)} />
 						<div className={`w-[100px] h-[cal(100px/3)] z-50 duration-75 ease-in rounded-lg -right-[110px] -top-[20px] flex flex-col bg-slate-300 dark:bg-slate-500 absolute ${option ? 'visible' : 'hidden'} `}>
-							<p className="w-full rounded-tl-lg rounded-tr-lg cursor-pointer hover:bg-slate-600 h-1/3 flex items-center justify-center border-b-2 border-b-slate-200">Copy</p>
-							<p className="w-full rounded-bl-lg rounded-br-lg cursor-pointer hover:bg-slate-600 h-1/3 flex items-center justify-center ">Forward</p>
+							<p className="w-full rounded-tl-lg rounded-tr-lg cursor-pointer bg-red-600 hover:bg-slate-600 h-1/3 flex items-center justify-center border-b-2 border-b-slate-200"
+								onClick={() => { setMessageId(message._id) }}>Copy</p>
+							<p className="w-full rounded-bl-lg rounded-br-lg bg-blue-800 cursor-pointer hover:bg-slate-600 h-1/3 flex items-center justify-center "
+								onClick={() => handleAddReply(message)}>Reply</p>
 						</div>
 					</div>
 				</div>
@@ -108,14 +130,24 @@ const ChatBubble = ({ me, message, previousMessage }: ChatBubbleProps) => {
 					<ListCollapse className="text-slate-600 opacity-0 hover:opacity-80 duration-200 cursor-pointer dark:text-white"
 						onClick={() => setOption(!option)} />
 					<div className={`w-[100px] z-50 h-[100px] rounded-lg -left-[100px] -top-[50px] flex flex-col bg-slate-300 dark:bg-slate-500 absolute ${option ? 'visible' : 'hidden'} `}>
-						<p className="w-full h-1/3 flex items-center justify-center rounded-tl-lg rounded-tr-lg cursor-pointer hover:bg-slate-600 border-b-2 border-b-slate-200">Copy</p>
-						<p className="w-full h-1/3 flex items-center justify-center cursor-pointer hover:bg-slate-600 border-b-2 border-b-slate-200">Forward</p>
+						<p className="w-full h-1/3 flex items-center justify-center rounded-tl-lg rounded-tr-lg cursor-pointer hover:bg-slate-600 border-b-2 border-b-slate-200"
+							onClick={() => { setMessageId(message._id) }}>Copy</p>
+						<p className="w-full h-1/3 flex items-center justify-center cursor-pointer hover:bg-slate-600 border-b-2 border-b-slate-200"
+							onClick={() => handleAddReply(message)}>
+							Reply
+						</p>
 						<p className="w-full h-1/3 flex items-center justify-center rounded-bl-lg rounded-br-lg cursor-pointer hover:bg-slate-600" onClick={handleDelete}>Delete</p>
 					</div>
 				</div>
 				<div className="flex gap-3 w-fit ">
 					<div className={`flex flex-col z-20 ml-auto max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
 						<SelfMessageIndicator />
+						{message.replyMessageSenderMessageType ? <div className="w-[100%] flex flex-col items-start bg-green-900 mx-auto">
+							<p className=" text-slate-300">{message.replyMessageSenderName?.length! > 10 ? message.replyMessageSenderName?.slice(0, 10) + '...' : message.replyMessageSenderName}</p>
+							<p className="text-white">{message.replyMessageSenderMessageType == 'text' ? message.replyMessageSenderMessage : ''}</p>
+							<p className="text-white">{message.replyMessageSenderMessageType == 'image' ? <ImageIcon size={12} className="text-white" /> : ''}</p>
+							<p className="text-white">{message.replyMessageSenderMessageType == 'video' ? <VideoIcon size={12} className="text-white" /> : ''}</p>
+						</div> : ''}
 						{message.messageType === "text" && <TextMessage message={message} />}
 						{message.messageType === "image" && <ImageMessage message={message}
 							handleClick={() => setOpen(true)}
@@ -180,10 +212,14 @@ const TextMessage = ({ message }: { message: IMessage }) => {
 					rel='noopener noreferrer'
 					className={`mr-2 text-sm font-light text-blue-400 underline`}
 				>
-					{message.content.substring(0,8)=="@gemini" ? message.content.slice(8) : message.content}
+					{message.content.substring(0, 8) == "@gemini" ? message.content.slice(8) : message.content}
 				</a>
 			) : (
-				<p className={`mr-2 text-sm font-light`}>{message.content}</p>
+				<>
+					<p className={`mr-2 text-sm font-light`}>{message.content}</p>
+					{/* {message.replyMessageSenderMessage != '' ? <p className="bg-black text-white">{ message.replyMessageSenderMessage }</p> : ''} */}
+					{/* {message.replyMessageSenderMessage != '' ? <p className="bg-red-500 text-white">{ message.replyMessageSenderName }</p> : ''} */}
+				</>
 			)}
 		</div>
 	);

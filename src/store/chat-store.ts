@@ -34,6 +34,9 @@ export interface IMessage {
 	content: string;
     messageType: "image" | "text" | "video";
 	storageId?: Id<"_storage">;
+	replyMessageSenderMessageType?: string;
+	replyMessageSenderMessage?: string;
+	replyMessageSenderName?: string;
 	sender: {
 		_id: Id<"users">;
 		image: string;

@@ -69,6 +69,7 @@ const config = {
       backgroundImage: {
         "chat-tile-light": "url('/bg-light.png')",
         "chat-tile-dark": "url('/bg-dark.png')",
+        'custom-gradient': 'linear-gradient(90deg, #67666c 0%, #4d4d5b 35%, #18383e 100%)',
       },
 
       // Rest of the file ...

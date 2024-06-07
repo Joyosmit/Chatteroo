@@ -9,10 +9,11 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useConversationStore } from "@/store/chat-store";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
+    Dialog,
+    DialogContent,
+    DialogDescription,
 } from "@/components/ui/dialog"
+import useReplyStore from "@/store/reply-store";
 
 const maxSize = 500 * 1024; // 500 KB
 const MediaDropdown = () => {
@@ -28,12 +29,13 @@ const MediaDropdown = () => {
     const sendImage = useMutation(api.messages.sendImage)
     const sendVideo = useMutation(api.messages.sendVideo)
 
-    const {selectedConversation} = useConversationStore()
-    const handleSendImage = async() => {
+    const { selectedConversation } = useConversationStore()
+    const { replies, addReply } = useReplyStore()
+    const handleSendImage = async () => {
         setIsLoading(true);
         // send image
         try {
-            if(selectedImage?.size! > maxSize) {
+            if (selectedImage?.size! > maxSize) {
                 throw new Error("Large")
             }
             const postUrl = await generateUploadUrl();
@@ -44,22 +46,32 @@ const MediaDropdown = () => {
                 },
                 body: selectedImage
             })
-            const {storageId} = await res.json();
-            await sendImage({
-                sender: me!._id,
-                conversation: selectedConversation?._id!,
-                imgId: storageId
-            })
-        } catch (error:any) {
+            const { storageId } = await res.json();
+            if (!replies.messageId) {
+                await sendImage({
+                    sender: me!._id,
+                    conversation: selectedConversation?._id!,
+                    imgId: storageId
+                })
+            } else {
+                await sendImage({
+                    sender: me!._id,
+                    conversation: selectedConversation?._id!,
+                    imgId: storageId,
+                    replyMessageId: replies.messageId
+                })
+            }
+        } catch (error: any) {
             // toast.error("Failed to send image")
-            if(error.message === "Large"){
+            if (error.message === "Large") {
                 toast.error("Image size should be less than 500 KB")
             } else {
                 toast.error("Failed to send image")
             }
-        }finally{
+        } finally {
             setSelectedImage(null);
             setIsLoading(false);
+            addReply("", null, "", "", "")
         }
     }
 
@@ -69,34 +81,43 @@ const MediaDropdown = () => {
             return;
             // throw new Error("Large")
         }
-		setIsLoading(true);
-		try {
-			const postUrl = await generateUploadUrl();
-			const result = await fetch(postUrl, {
-				method: "POST",
-				headers: { "Content-Type": selectedVideo!.type },
-				body: selectedVideo,
-			});
+        setIsLoading(true);
+        try {
+            const postUrl = await generateUploadUrl();
+            const result = await fetch(postUrl, {
+                method: "POST",
+                headers: { "Content-Type": selectedVideo!.type },
+                body: selectedVideo,
+            });
 
-			const { storageId } = await result.json();
+            const { storageId } = await result.json();
+            if (!replies.messageId) {
+                await sendVideo({
+                    videoId: storageId,
+                    conversation: selectedConversation!._id,
+                    sender: me!._id,
+                });
+            } else {
+                await sendVideo({
+                    videoId: storageId,
+                    conversation: selectedConversation!._id,
+                    sender: me!._id,
+                    replyMessageId: replies.messageId,
+                });
+            }
 
-			await sendVideo({
-				videoId: storageId,
-				conversation: selectedConversation!._id,
-				sender: me!._id,
-			});
-
-			setSelectedVideo(null);
-		} catch (error:any) {
-            if(error.message == "Large"){
+            setSelectedVideo(null);
+        } catch (error: any) {
+            if (error.message == "Large") {
                 toast.error("Video size should be less than 2 MB")
             } else {
                 toast.error("Failed to send video")
             }
-		} finally {
-			setIsLoading(false);
-		}
-	};
+        } finally {
+            setIsLoading(false);
+            addReply("", null, "", "", "")
+        }
+    };
     return (
         <>
             <input
@@ -163,7 +184,7 @@ type MediaImageDialogProps = {
     handleSendImage: () => void;
 };
 
-const MediaImageDialog = ({ isOpen, onClose, selectedImage, isLoading,handleSendImage }: MediaImageDialogProps) => {
+const MediaImageDialog = ({ isOpen, onClose, selectedImage, isLoading, handleSendImage }: MediaImageDialogProps) => {
     const [renderedImage, setRenderedImage] = useState<string | null>(null);
 
     useEffect(() => {
